@@ -1,3 +1,4 @@
+import java.beans.Encoder;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -17,10 +18,8 @@ public class LZSS {
 	public void compress(byte[] source, int windowSize, int maxMatch, int minMatch) 
 	{
 		//you're gonna have to write the window size, and the max match size at the start of the file, so you know how to decode it later
-		ByteArrayOutputStream encodedData = new ByteArrayOutputStream();
-		StringBuilder dataFlags = new StringBuilder();
-				StringBuilder searchBuffer = WriteInitialDictionary(source, encodedData, minMatch);
-		String searchBufferr = new String();
+		StringBuilder encodedData = WriteInitialDictionary(source, minMatch);
+		StringBuilder searchBuffer = WriteInitialDictionary(source, minMatch);
 		int sourcePosition = minMatch;
 		Match match= new Match(0,0, "");
 		
@@ -29,11 +28,11 @@ public class LZSS {
 			match = FindMatch(source, minMatch, match, searchBuffer, sourcePosition, maxMatch);
 			if(match.length>minMatch)
 			{
-				WriteMatchToByteArray(dataFlags, match, encodedData);
+				WriteMatch(match, encodedData);
 			}
 			else
 			{
-				WriteCharacterToByteArray(dataFlags, match, encodedData, source, sourcePosition);
+				WriteCharacter(match, encodedData, source, sourcePosition);
 			}
 			sourcePosition = sourcePosition + match.length; 
 			AdjustWindow(match, searchBuffer, windowSize);
@@ -46,7 +45,7 @@ public class LZSS {
 	{
 		BitSet encodedBits = new BitSet(encodedData.size() + dataFlags.length());
 		byte[] encodedDataByteArray = encodedData.toByteArray();
-		int numberOfBytesToWrite = (int) Math.ceil( LogBaseTwo(windowSize)/8 ) ;
+		int numberOfBytesToWrite = (int) Math.ceil( LogBaseTwo(windowSize)/8 );
 		int indexOfEncodedBytes = 0;
 		int indexOfBitset = 0;
 		
@@ -77,7 +76,7 @@ public class LZSS {
 	
 	public void AdjustWindow(Match match, StringBuilder searchBuffer, int windowSize) 
 	{
-		for(int i=0; i<match.value.length(); i++)
+		for(int i=0; i<match.length; i++)
 		{
 			if(searchBuffer.length() >= windowSize)
 				searchBuffer.deleteCharAt(0);
@@ -85,26 +84,44 @@ public class LZSS {
 		}
 	}
 
-	public void WriteMatchToByteArray(StringBuilder dataFlags, Match match, ByteArrayOutputStream encodedData) 
+	public void WriteMatch(Match match, StringBuilder encodedData) 
 	{
-		dataFlags.append('1');
-		try { 
-			encodedData.write(String.valueOf(match.offset).getBytes());
-			encodedData.write(String.valueOf(match.length).getBytes());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		encodedData.append('1');
+		encodedData.append(ConvertToBinaryByteString(match.offset));
+		encodedData.append(ConvertToBinaryByteString(match.length));	
 	}
 	
-	public void WriteCharacterToByteArray(StringBuilder dataFlags, Match match, ByteArrayOutputStream encodedData, byte[] source, int sourcePosition)
-	{
-		dataFlags.append('0');
+	public void WriteCharacter(Match match, StringBuilder encodedData, byte[] source, int sourcePosition)
+	{	
 		for(int i = 0; i < match.length; i ++)
 		{
-			encodedData.write(source[sourcePosition]);
+			encodedData.append('0');
+			encodedData.append(ConvertToBinaryByteString((char)source[sourcePosition]));
 			sourcePosition++;
-		}
+		}	
 	}
+	
+	public String ConvertToBinaryByteString(int parameter)
+	{
+		String binaryRepresentation = Integer.toBinaryString(parameter);
+		
+		while(binaryRepresentation.length() % 8 != 0)
+		{
+			binaryRepresentation = '0' + binaryRepresentation;
+		}
+		return binaryRepresentation;
+	}
+	
+	public String ConvertToBinaryByteString(char parameter)
+	{
+		String binaryRepresentation = Integer.toBinaryString(parameter);
+		
+		while(binaryRepresentation.length() % 8 != 0)
+		{
+			binaryRepresentation = '0' + binaryRepresentation;
+		}
+		return binaryRepresentation;
+	} 
 	
 	public Match FindMatch(byte[] source, int minMatch, Match match, StringBuilder searchBuffer, int sourcePosition, int maxMatch)
 	{
@@ -116,27 +133,34 @@ public class LZSS {
 		{
 			if(searchBuffer.toString().contains(match.value + dataChunk.charAt(dataChunkOffset)))
 			{
-				dataChunkOffset ++;
 				match.value += dataChunk.charAt(dataChunkOffset);
 				match.offset = searchBuffer.indexOf(match.value);
 				match.length ++;
+				dataChunkOffset ++;
 			}
 			else
 			{
+				if (match.length == 0)
+				{
+					match.SetLength(1);
+					match.AddValue((char)source[sourcePosition]);
+				}
 				return match;
 			}
 		}
 		return match;
 	}
 	
-	public StringBuilder WriteInitialDictionary(byte[] source, ByteArrayOutputStream encodedData, int minMatch)
+	public StringBuilder WriteInitialDictionary(byte[] source, int minMatch)
 	{
+		StringBuilder searchBuffer = new StringBuilder();
+		
 		for(int i=0;i<minMatch;i++)
 		{
-			encodedData.write(source[i]);
+			searchBuffer.append((char)source[i]);
 		}
 		
-		return new StringBuilder(encodedData.toString());
+		return searchBuffer;
 	}
 	
 	

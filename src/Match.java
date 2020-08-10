@@ -14,6 +14,7 @@ public class Match {
 	public void SetOffset(int offset) { this.offset = offset; }
 	public void SetLength(int length) { this.length = length; }
 	public void SetValue(String value) { this.value = value; }
+	public void AddValue(char value) { this.value += value; }
 	
 	public void Reset()
 	{
