@@ -1,25 +1,29 @@
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.BitSet;
 
 public class Main {
 
-	public static void main(String[] args) {
-		LZSS lzss = new LZSS();
-		byte[] source = {'a','b','r','a','a','b','r','a','a','b','r','a'};
-		lzss.compress(source, 4096, 8, 2);
-		StringBuilder wow = new StringBuilder();
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		System.out.println(ConvertToBinaryByteString(256));
-	}
-	
-	public static String ConvertToBinaryByteString(int parameter)
-	{
-		String binaryRepresentation = Integer.toBinaryString(parameter);
+	public static void main(String[] args) throws ClassNotFoundException {
 		
-		while(binaryRepresentation.length() % 8 != 0)
-		{
-			binaryRepresentation = '0' + binaryRepresentation;
+		String inPath = "D:\\USER\\Downloads\\Files To Compress\\test.txt";
+		String outPath = "D:\\USER\\Downloads\\Files To Compress\\testCOMP.txt";
+		String compressedFilePath = "D:\\USER\\Downloads\\Files To Compress\\testDECOMP.txt";;
+		int windowSize = 4096;
+		int maxMatch = 256;
+		int minMatch = 2;
+		
+		LZSS lzssCompress = new LZSS(inPath, outPath, windowSize, maxMatch, minMatch);
+		LZSS lzssDecompress = new LZSS(outPath, compressedFilePath, windowSize, maxMatch, minMatch);
+		try {
+			lzssCompress.Compress();
+			lzssDecompress.Decompress();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		return binaryRepresentation;
+		
 	}
 
 }
