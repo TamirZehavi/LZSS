@@ -7,15 +7,21 @@ public class Main {
 
 	public static void main(String[] args) throws ClassNotFoundException {
 		
-		String inPath = "D:\\USER\\Downloads\\Files To Compress\\test.txt";
+//		System.out.println(160%64);
+		BitSet bits = new BitSet(8);
+		
+//		System.out.println(bits.size());
+		
+		
+		String inPath = "D:\\USER\\Downloads\\Files To Compress\\8.8.19.png";
 		String outPath = "D:\\USER\\Downloads\\Files To Compress\\testCOMP.txt";
-		String compressedFilePath = "D:\\USER\\Downloads\\Files To Compress\\testDECOMP.txt";;
+		String decompressedFilePath = "D:\\USER\\Downloads\\Files To Compress\\testDECOMP.png";;
 		int windowSize = 4096;
 		int maxMatch = 256;
 		int minMatch = 2;
 		
 		LZSS lzssCompress = new LZSS(inPath, outPath, windowSize, maxMatch, minMatch);
-		LZSS lzssDecompress = new LZSS(outPath, compressedFilePath, windowSize, maxMatch, minMatch);
+		LZSS lzssDecompress = new LZSS(outPath, decompressedFilePath, windowSize, maxMatch, minMatch);
 		try {
 			lzssCompress.Compress();
 			lzssDecompress.Decompress();
