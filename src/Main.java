@@ -6,9 +6,9 @@ public class Main {
 		
 //		GUI gui = new GUI();
 		
-		String inPath = "D:\\USER\\Downloads\\Files To Compress\\Romeo and Juliet  Entire Play.txt";
-		String outPath = "D:\\USER\\Downloads\\Files To Compress\\COMPRESSED2.txt";
-		String decompressedFilePath = "D:\\USER\\Downloads\\Files To Compress\\DECOMPRESSED2.txt";
+		String inPath = "D:\\USER\\Downloads\\Files To Compress\\(2014)null & Scooblee - kotfd [VRC6].mp3";
+		String outPath = "D:\\USER\\Downloads\\Files To Compress\\COMPRESSED.txt";
+		String decompressedFilePath = "D:\\USER\\Downloads\\Files To Compress\\DECOMPRESSED.mp3";
 		int windowSize = 4096;
 		int maxMatch = 256;
 		int minMatch = 2;

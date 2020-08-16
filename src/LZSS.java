@@ -111,7 +111,7 @@ public class LZSS {
 	
 	public void AdjustWindow(Match match, StringBuilder searchBuffer, int windowSize) 
 	{
-		for(int i=0; i<match.length; i++)
+		for(int i = 0 ; i < match.length ; i ++)
 		{
 			if(searchBuffer.length() >= windowSize)
 				searchBuffer.deleteCharAt(0);
@@ -121,11 +121,6 @@ public class LZSS {
 
 	public void WriteMatch(Match match, StringBuilder encodedData) 
 	{
-		if ( match.length < this.minMatch || match.length > this.maxMatch)
-		{
-			System.out.println("Invalid length detected: " + match.length);
-		}
-		
 		encodedData.append('1');
 		encodedData.append(ConvertToBinaryByteString(match.offset, true));
 		encodedData.append(ConvertToBinaryByteString(match.length, false));	
@@ -133,15 +128,11 @@ public class LZSS {
 
 	public void WriteCharacter(int matchLength, StringBuilder encodedData, byte[] source, int sourcePosition)
 	{	
-
-		for(int i = 0; i < matchLength; i ++)
+		for(int i = 0 ; i < matchLength ; i ++)
 		{
 			encodedData.append('0');
-			
-			int a = (int)((char)source[sourcePosition]); // at first: byte = 0x82 -- after char convert char = 0xFF82 -- after int convert int = 0xFFFFFF82
-			int b = Byte.toUnsignedInt((source[sourcePosition])); // After using tounsignedInt int = 0x82 -- 0x00000082
-//			encodedData.append(ConvertToBinaryByteString((int)((char)source[sourcePosition]),false));
-			encodedData.append(ConvertToBinaryByteString(b,false));
+			int byteAsUnsignedInt = Byte.toUnsignedInt((source[sourcePosition])); 
+			encodedData.append(ConvertToBinaryByteString(byteAsUnsignedInt,false));
 			sourcePosition++;
 		}	
 	}
@@ -177,12 +168,11 @@ public class LZSS {
 		
 		while(match.value.length()<maxMatch-1)
 		{
-			byte byteett = dataChunk[dataChunkOffset];
-			char charett = (char)((int)(byteett) & 0xFF); 
+			char nextChar = (char)(Byte.toUnsignedInt(dataChunk[dataChunkOffset])); 
 			
-			if(searchBuffer.toString().contains(match.value + charett))
+			if(searchBuffer.toString().contains(match.value + nextChar))
 			{
-				match.AddValue(dataChunk[dataChunkOffset]);
+				match.AddByte(dataChunk[dataChunkOffset]);
 				match.offset = searchBuffer.indexOf(match.value);
 				match.length ++;
 				dataChunkOffset ++;
@@ -192,7 +182,7 @@ public class LZSS {
 				if(match.length == 0)
 				{
 					match.SetLength(1);
-					match.AddValue(source[sourcePosition]);
+					match.AddByte(source[sourcePosition]);
 				}
 				return match;
 			}
@@ -206,7 +196,7 @@ public class LZSS {
 		
 		for(int i=0;i<minMatch;i++)
 		{
-			searchBuffer.append((char)((int)(source[i]) & 0xFF));
+			searchBuffer.append((char)(Byte.toUnsignedInt(source[i])));
 		}
 		
 		return searchBuffer;
@@ -240,16 +230,13 @@ public class LZSS {
 	
 	private void WriteToFile(StringBuilder decodedData) throws IOException
 	{
-		String DecodedData = decodedData.toString();
-		int nLength = DecodedData.length();
-		try (FileOutputStream stream = new FileOutputStream(this.outPath)) {
-			for(int i = 0; i < nLength; i++)
-			{
-				byte b = (byte)DecodedData.charAt(i);
-				stream.write(b);
-			}
+		FileOutputStream outputFileStream = new FileOutputStream(this.outPath); 
+		for(int i = 0; i < decodedData.length(); i++)
+		{
+			byte currentByte = (byte)decodedData.charAt(i);
+			outputFileStream.write(currentByte);
 		}
-		
+		outputFileStream.close();
 	}
 
 	private void Decode(BitSet source, StringBuilder decodedData, StringBuilder searchBuffer) 
@@ -263,26 +250,15 @@ public class LZSS {
 			{
 				this.bitsSourcePosition++;
 				match.SetOffset(ReadOffset(source));
-				match.SetLength(Byte.toUnsignedInt(ReadNextByte(source)));
-				
-				if ( match.length < this.minMatch || match.length > this.maxMatch)
-				{
-					System.out.println("Invalid length detected : " + match.length + " at offset: " + match.offset);
-				}
-				
-				if ( match.offset + match.length > searchBuffer.length())
-				{
-					System.out.println("Out of bounds, offset: " + match.offset + " length: " + match.length);
-				}
-				
-				match.SetValue(searchBuffer.substring(match.offset, match.offset + (match.length & 0x7FFFFFFF)));
+				match.SetLength(ReadNextByte(source));
+				match.SetValue(searchBuffer.substring(match.offset, match.offset + match.length));
 				decodedData.append(match.value);
 			}
 			else
 			{
 				this.bitsSourcePosition++;
 				match.SetLength(1);
-				match.AddValue(ReadNextByte(source));
+				match.AddByte((byte)ReadNextByte(source));
 				decodedData.append(match.value);
 			}
 			AdjustWindow(match, searchBuffer, this.windowSize);
@@ -310,7 +286,7 @@ public class LZSS {
 	{
 		int nextOffset = 0;
 		
-		if(this.numberOfBytesPerOffset > 1)
+		if(this.numberOfBytesPerOffset > 1) //read two bytes as offset
 		{
 			for(int i = 15 ; i >= 0 ; i--)
 			{
@@ -325,15 +301,15 @@ public class LZSS {
 		}
 		else 
 		{
-			nextOffset = Byte.toUnsignedInt(ReadNextByte(source));
+			nextOffset = ReadNextByte(source); //read one byte as offset
 		}
 		
 		return nextOffset;
 	}
 	
-	public byte ReadNextByte(BitSet source)
+	public int ReadNextByte(BitSet source)
 	{
-		byte nextByte = 0;
+		int nextByte = 0;
 		for(int i = 7 ; i >= 0 ; i--)
 		{
 			if(source.get(this.bitsSourcePosition))
