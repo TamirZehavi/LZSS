@@ -15,11 +15,10 @@ import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.image.Image;
+//import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 
 public class GUI extends Application 
 {
@@ -42,9 +41,9 @@ public class GUI extends Application
 		BorderPane mainLayout = new BorderPane();
 		Scene mainScene = new Scene(mainLayout, 520, 320);
 		
-		this.window.getIcons().add(new Image("file:wink.png"));
+//		Image img = new Image("/wink.png");
+//		this.window.getIcons().add(img);
 		
-//		mainLayout.setStyle("-fx-background-color: #515658;");
 		this.window.setScene(mainScene);
 		
 		//Define two grids, one for adding files and the other for the center of the window
@@ -95,16 +94,10 @@ public class GUI extends Application
 		GridPane.setConstraints(maxMatchLabel, 1, 0);
 		
 		ComboBox<String> LZSSmaxMatchBox = new ComboBox<String>();
-		LZSSmaxMatchBox.getItems().addAll("8 Bytes","16 Bytes","32 Bytes","64 Bytes","128 Bytes","256 Bytes");
+		LZSSmaxMatchBox.getItems().addAll("32 Bytes","64 Bytes","128 Bytes","256 Bytes","512 Bytes", "1024 Bytes", "2048 Bytes", "4096 Bytes", "8192 Bytes", "16384 Bytes", "32768 Bytes");
 		LZSSmaxMatchBox.setValue("256 Bytes");
 		this.maxMatch = 256; //initial size
 		GridPane.setConstraints(LZSSmaxMatchBox, 1, 1);
-		
-		ComboBox<String> LZ77maxMatchBox = new ComboBox<String>();
-		LZ77maxMatchBox.getItems().addAll("32 Bytes","64 Bytes","128 Bytes","256 Bytes","512 Bytes", "1024 Bytes", "2048 Bytes", "4096 Bytes", "8192 Bytes", "16384 Bytes", "32768 Bytes");
-		LZ77maxMatchBox.setValue("256 Bytes");
-		GridPane.setConstraints(LZ77maxMatchBox, 1, 1);
-		LZ77maxMatchBox.setVisible(false);
 		
 		Label minMatchLabel = new Label("Min Match Size");
 		GridPane.setConstraints(minMatchLabel, 2, 0);
@@ -153,7 +146,7 @@ public class GUI extends Application
 		decompressButton.setDisable(true);
 		decompressButton.getStyleClass().add("BlueButtons");
 		
-		centerGrid.getChildren().addAll(windowSizeLabel , windowSizeBox , maxMatchLabel , LZSSmaxMatchBox , LZ77maxMatchBox , 
+		centerGrid.getChildren().addAll(windowSizeLabel , windowSizeBox , maxMatchLabel , LZSSmaxMatchBox ,  
 				minMatchLabel , minMatchBox , compressionType , radioButtons , compressButton , compressionRatio , decompressButton);
 		
 		mainLayout.setCenter(centerGrid);
@@ -167,15 +160,11 @@ public class GUI extends Application
 		LZSSButton.setOnAction( click -> {
 			this.compressionMethod = "LZSS";
 			minMatchBox.setDisable(false);
-			LZ77maxMatchBox.setVisible(false);
-			LZSSmaxMatchBox.setVisible(true);
 		});
 		
 		LZ77Button.setOnAction( click -> {
 			this.compressionMethod = "LZ77";
 			minMatchBox.setDisable(true);
-			LZSSmaxMatchBox.setVisible(false);
-			LZ77maxMatchBox.setVisible(true);
 		});
 		
 		addFileButton.setOnAction(click -> {

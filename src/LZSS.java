@@ -11,13 +11,13 @@ import java.util.BitSet;
 
 public class LZSS {
 	
+	private static final int SIZE_OF_ONE_BYTE = 255;
 	protected String inPath = null;
 	protected String outPath = null;
 	protected int windowSize = 0;
 	protected int maxMatch = 0;
 	protected int minMatch = 0;
 	private File inFile = null;
-	private int numberOfBytesPerOffset = 0;
 	protected int redundantBits = 0;
 	protected int sourceSize = 0;
 	protected int bitsSourcePosition = 0;
@@ -31,7 +31,6 @@ public class LZSS {
 		this.windowSize = windowSize;
 		this.maxMatch = maxMatch;
 		this.minMatch = minMatch;
-		this.numberOfBytesPerOffset = (int) (Math.ceil(LogBaseTwo(this.windowSize)/8f));
 	}
 
 	public void Compress() throws IOException
@@ -67,7 +66,7 @@ public class LZSS {
 	private void WriteRedundantBits(StringBuilder encodedData)
 	{
 		this.redundantBits = 64 - ((encodedData.length() + 8) % 64);
-		encodedData.insert(0, ConvertToBinaryByteString(this.redundantBits, false));
+		encodedData.insert(0, ConvertToBinaryByteString(this.redundantBits));
 	}
 
 	public void WriteToFile(BitSet encodedBits) throws IOException {
@@ -132,8 +131,18 @@ public class LZSS {
 	public void WriteMatch(Match match, StringBuilder encodedData) 
 	{
 		encodedData.append('1');
-		encodedData.append(ConvertToBinaryByteString(match.offset, true));
-		encodedData.append(ConvertToBinaryByteString(match.length, false));	
+		
+		if(match.offset > SIZE_OF_ONE_BYTE)
+			encodedData.append('1');
+		else
+			encodedData.append('0');
+		encodedData.append(ConvertToBinaryByteString(match.offset));
+		
+		if(match.length > SIZE_OF_ONE_BYTE)
+			encodedData.append('1');
+		else
+			encodedData.append('0');
+		encodedData.append(ConvertToBinaryByteString(match.length));	
 	}
 
 	public void WriteCharacter(int matchLength, StringBuilder encodedData, byte[] source, int sourcePosition)
@@ -142,30 +151,19 @@ public class LZSS {
 		{
 			encodedData.append('0');
 			int byteAsUnsignedInt = Byte.toUnsignedInt((source[sourcePosition])); 
-			encodedData.append(ConvertToBinaryByteString(byteAsUnsignedInt,false));
+			encodedData.append(ConvertToBinaryByteString(byteAsUnsignedInt));
 			sourcePosition++;
 		}	
 	}
 	
-	public String ConvertToBinaryByteString(int parameter, boolean isItAnOffset)
+	public String ConvertToBinaryByteString(int parameter)
 	{
 		String binaryRepresentation = Integer.toBinaryString(parameter);
 		
-		if(isItAnOffset && this.numberOfBytesPerOffset > 1)
+		while(binaryRepresentation.length() % 8 != 0)
 		{
-			while(binaryRepresentation.length() % 16 != 0)
-			{
-				binaryRepresentation = '0' + binaryRepresentation;
-			}
+			binaryRepresentation = '0' + binaryRepresentation;
 		}
-		else
-		{
-			while(binaryRepresentation.length() % 8 != 0)
-			{
-				binaryRepresentation = '0' + binaryRepresentation;
-			}
-		}
-		
 		
 		return binaryRepresentation;
 	}
@@ -216,8 +214,8 @@ public class LZSS {
 		
 		StringBuilder encodedData = new StringBuilder();
 		
-		String windowSizeBits = ConvertToBinaryByteString(LogBaseTwo(this.windowSize), false);
-		String maxMatchBits = ConvertToBinaryByteString(LogBaseTwo(this.maxMatch), false);
+		String windowSizeBits = ConvertToBinaryByteString(LogBaseTwo(this.windowSize));
+		String maxMatchBits = ConvertToBinaryByteString(LogBaseTwo(this.maxMatch));
 		
 		encodedData.append(windowSizeBits);
 		encodedData.append(maxMatchBits);
@@ -259,8 +257,30 @@ public class LZSS {
 			if(source.get(this.bitsSourcePosition))
 			{
 				this.bitsSourcePosition++;
-				match.SetOffset(ReadOffset(source));
-				match.SetLength(ReadNextByte(source));
+				
+				if(source.get(this.bitsSourcePosition))
+				{
+					this.bitsSourcePosition++;
+					match.SetOffset(ReadTwoBytes(source));
+				}
+				else
+				{
+					this.bitsSourcePosition++;
+					match.SetOffset(ReadOneByte(source));
+				}
+				
+				
+				if(source.get(this.bitsSourcePosition))
+				{
+					this.bitsSourcePosition++;
+					match.SetLength(ReadTwoBytes(source));
+				}
+				else
+				{
+					this.bitsSourcePosition++;
+					match.SetLength(ReadOneByte(source));
+				}
+				
 				match.SetValue(searchBuffer.substring(match.offset, match.offset + match.length));
 				decodedData.append(match.value);
 			}
@@ -268,7 +288,7 @@ public class LZSS {
 			{
 				this.bitsSourcePosition++;
 				match.SetLength(1);
-				match.AddByte((byte)ReadNextByte(source));
+				match.AddByte((byte)ReadOneByte(source));
 				decodedData.append(match.value);
 			}
 			AdjustWindow(match, searchBuffer, this.windowSize);
@@ -286,38 +306,31 @@ public class LZSS {
 
 	private void GetInitialData(BitSet source, int sourcePosition) throws IOException 
 	{
-		this.sourceSize = source.size() - ReadNextByte(source);
-		this.windowSize = (int)(Math.pow(2, ReadNextByte(source)));
-		this.maxMatch = (int)(Math.pow(2, ReadNextByte(source)));
-		this.numberOfBytesPerOffset = (int) (Math.ceil(LogBaseTwo(this.windowSize)/8f));
+		this.sourceSize = source.size() - ReadOneByte(source);
+		this.windowSize = (int)(Math.pow(2, ReadOneByte(source)));
+		this.maxMatch = (int)(Math.pow(2, ReadOneByte(source)));
+//		this.numberOfBytesPerOffset = (int) (Math.ceil(LogBaseTwo(this.windowSize)/8f));
 	}
 	
-	public int ReadOffset(BitSet source)
+	public int ReadTwoBytes(BitSet source)
 	{
-		int nextOffset = 0;
+		int nextTwoBytes = 0;
 		
-		if(this.numberOfBytesPerOffset > 1) //read two bytes as offset
+		for(int i = 15 ; i >= 0 ; i--)
 		{
-			for(int i = 15 ; i >= 0 ; i--)
+			if(source.get(this.bitsSourcePosition))
 			{
-				if(source.get(this.bitsSourcePosition))
-				{
-					nextOffset += Math.pow(2, i);
-					this.bitsSourcePosition++;
-				}
-				else
-					this.bitsSourcePosition++;
+				nextTwoBytes += Math.pow(2, i);
+				this.bitsSourcePosition++;
 			}
-		}
-		else 
-		{
-			nextOffset = ReadNextByte(source); //read one byte as offset
+			else
+				this.bitsSourcePosition++;
 		}
 		
-		return nextOffset;
+		return nextTwoBytes;
 	}
 	
-	public int ReadNextByte(BitSet source)
+	public int ReadOneByte(BitSet source)
 	{
 		int nextByte = 0;
 		for(int i = 7 ; i >= 0 ; i--)

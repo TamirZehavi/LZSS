@@ -15,7 +15,7 @@ public class LZ77 {
 	private File inFile;
 	private File outFile;
 	private final int windowSize;
-	private final int lookaheadBufferSize;
+	private final int lookaheadBufferSize;	
 	private final int searchBufferSize;
 	private int nextByteIndex = 0;
 	private int nextBitIndex = 0;
@@ -23,8 +23,10 @@ public class LZ77 {
 	private int currentLookaheadBufferSize = 0;
 	private int appendToWindowBuffer = 0;
 	private byte[] source = null;
+	private float compressionRatio;
 
-	public LZ77(String inPath, String outPath, int windowSize, int lookaheadBufferSize) throws IOException {
+	public LZ77(String inPath,String outPath,int windowSize,int lookaheadBufferSize) throws IOException
+	{
 		this.inPath = inPath;
 		this.outPath = outPath;
 		this.inFile = new File(inPath);
@@ -34,242 +36,265 @@ public class LZ77 {
 		this.searchBufferSize = windowSize - lookaheadBufferSize;
 		this.source = Files.readAllBytes(inFile.toPath());
 	}
-
-	public void compress() throws IOException {
+	public void compress() throws IOException
+	{
 		StringBuilder dictionary = new StringBuilder();
 		bufferInitialize(dictionary);
-		StringBuilder compressed = new StringBuilder();
-		encode(dictionary, compressed);
+		StringBuilder compressed = new StringBuilder();		
+		encode(dictionary,compressed);
 		addSizeBitsMod64(compressed);
-		writeFile(compressed);
+		writeFile(compressed);		
 	}
-
-	public void bufferInitialize(StringBuilder dictionary) {
+	public void bufferInitialize(StringBuilder dictionary)
+	{		
 		for (int i = 0; i < lookaheadBufferSize; i++) {
-			if (source.length > nextByteIndex) {
-				dictionary.append((char) Byte.toUnsignedInt(source[nextBitIndex]));
+			if(source.length>nextByteIndex) {
+				dictionary.append((char)Byte.toUnsignedInt(source[nextByteIndex]));
 				nextByteIndex++;
-				currentLookaheadBufferSize++;
-			} else {
+				currentLookaheadBufferSize++;				
+			}
+			else
+			{
 				break;
 			}
 		}
 	}
-
-	public void encode(StringBuilder dictionary, StringBuilder compressed) {
-		while (currentLookaheadBufferSize > 0) {
+	public void encode(StringBuilder dictionary,StringBuilder compressed)
+	{
+		while(currentLookaheadBufferSize > 0)
+		{
 			Match match = findMatch(dictionary);
-			WriteMatch(compressed, match.offset, match.length,
-					dictionary.charAt(currentSearchBufferSize + match.length));
+			WriteMatch(compressed,match.offset,match.length,dictionary.charAt(currentSearchBufferSize + match.length));
 			appendToWindowBuffer = increaseBuffer(match.length);
 			appendBuffer(dictionary);
 		}
 	}
-
-	public Match findMatch(StringBuilder dictionary) {
-		Match match = new Match(0, 0, "");
+	public Match findMatch(StringBuilder dictionary)
+	{
+		Match match= new Match(0,0, "");
 		String matchedString = null;
 		int offset;
 		int matchLookAheadIndex = currentSearchBufferSize;
-		if (!haveAnyMatch(dictionary)) {
-		} else {
+		if(haveAnyMatch(dictionary))
+		{
 			matchedString = "" + dictionary.charAt(matchLookAheadIndex);
-			offset = findMatchIndex(dictionary, matchedString);
-			while (offset != -1 && matchLookAheadIndex < dictionary.length() - 1) {
+			offset = findMatchIndex(dictionary,matchedString);
+			while(offset != -1 && matchLookAheadIndex < dictionary.length() - 1)
+			{
 				match.SetLength(match.length + 1);
 				match.SetOffset(offset);
 				match.SetValue(matchedString);
 				matchLookAheadIndex++;
-				matchedString += dictionary.charAt(matchLookAheadIndex);
-				offset = findMatchIndex(dictionary, matchedString);
+				matchedString +=dictionary.charAt(matchLookAheadIndex);
+				offset = findMatchIndex(dictionary,matchedString);
 			}
 		}
 		return match;
-
 	}
-
-	public int findMatchIndex(StringBuilder dictionary, String value) {
+	public int findMatchIndex(StringBuilder dictionary,String value)
+	{
 		int stringLength = value.length();
 		String tmpMatch = null;
 		int offsetMatch;
-		for (int i = currentSearchBufferSize - 1; i >= 0; i--) {
-			tmpMatch = dictionary.substring(i, i + stringLength);
+		for (int i = currentSearchBufferSize - 1; i >=0; i--) 
+		{
+			tmpMatch = dictionary.substring(i, i +stringLength );
 			offsetMatch = currentSearchBufferSize - i;
-			if (tmpMatch.equals(value)) {
+			if(tmpMatch.equals(value))
+			{
 				return offsetMatch;
 			}
 		}
 		return -1;
 	}
-
-	public boolean haveAnyMatch(StringBuilder dictionary) {
-		if (currentSearchBufferSize == 0) {
+	public boolean haveAnyMatch(StringBuilder dictionary)
+	{
+		if (currentSearchBufferSize == 0)
+		{
 			return false;
 		}
-		if (!isExistInSearchBuffer(dictionary, dictionary.charAt(currentSearchBufferSize))) {
+		if(!isExistInSearchBuffer(dictionary,dictionary.charAt(currentSearchBufferSize)))	
+		{
 			return false;
 		}
 		return true;
 	}
-
-	public boolean isExistInSearchBuffer(StringBuilder dictionary, char isCharAtDictionary) {
+	public boolean isExistInSearchBuffer(StringBuilder dictionary, char isCharAtDictionary)
+	{
 		for (int i = 0; i < currentSearchBufferSize; i++) {
-			if (dictionary.charAt(i) == isCharAtDictionary) {
+			if(dictionary.charAt(i) == isCharAtDictionary)
+			{
 				return true;
 			}
 		}
 		return false;
 	}
-
-	public int increaseBuffer(int matchLength) {
+	public int increaseBuffer(int matchLength)
+	{
 		return 1 + matchLength;
 	}
-
 	public int findBitSize(int decimalNumber) {
-		if (decimalNumber >= 256) {
+		if(decimalNumber >= 256)
+		{
 			return 16;
-		} else {
+		}
+		else
+		{
 			return 8;
 		}
 	}
-
-	public void convertStringToBitSet(StringBuilder compressed, BitSet encodedBits) {
+	public void convertStringToBitSet(StringBuilder compressed,BitSet encodedBits)
+	{
 		for (int i = 0; i < compressed.length(); i++) {
-			if (compressed.charAt(i) == 1) {
+			if(compressed.charAt(i)==1)
+			{
 				encodedBits.set(i);
 			}
 		}
 	}
-
-	public BitSet ConvertToBits(StringBuilder compressed) {
+	public BitSet ConvertToBits(StringBuilder compressed)
+	{
 		BitSet encodedBits = new BitSet(compressed.length());
 		int nextIndexOfOne = compressed.indexOf("1", 0);
-		while (nextIndexOfOne != -1) {
+		while( nextIndexOfOne != -1)
+		{
 			encodedBits.set(nextIndexOfOne);
 			nextIndexOfOne++;
 			nextIndexOfOne = compressed.indexOf("1", nextIndexOfOne);
-		}
+		}		
 		return encodedBits;
 	}
-
-	public void writeFile(StringBuilder compressed) throws IOException {
+	public void writeFile(StringBuilder compressed) throws IOException
+	{
 		BitSet encodedBits = new BitSet(compressed.length());
 		encodedBits = ConvertToBits(compressed);
 		FileOutputStream writer = new FileOutputStream(this.outPath);
 		ObjectOutputStream objectWriter = new ObjectOutputStream(writer);
 		objectWriter.writeObject(encodedBits);
+		CalculateRatio(encodedBits,source);
 		objectWriter.close();
 	}
-
-	public void appendBuffer(StringBuilder dictionary) {
+	public void appendBuffer(StringBuilder dictionary)
+	{
 		for (int i = 0; i < appendToWindowBuffer && i < source.length; i++) {
-			if (ableDeleteChar(dictionary)) {
+			if(ableDeleteChar(dictionary))
+			{
 				dictionary.deleteCharAt(0);
 			}
-			if (nextByteIndex < source.length) {
-				char nextByte = (char) source[nextByteIndex];
+			if(nextByteIndex<source.length)
+			{
+				char nextByte = (char)Byte.toUnsignedInt(source[nextByteIndex]);
 				dictionary.append(nextByte);
 				nextByteIndex++;
-			} else {
+			}
+			else
+			{
 				currentLookaheadBufferSize--;
 			}
-			if (currentSearchBufferSize < searchBufferSize) {
+			if(currentSearchBufferSize < searchBufferSize)
+			{
 				currentSearchBufferSize++;
 			}
 		}
 		appendToWindowBuffer = 0;
 	}
-
-	public void WriteMatch(StringBuilder compressed, int offset, int length, char character) {
-		/*
-		 * int offsetBitSizeCheck, lengthBitSizeCheck; offsetBitSizeCheck =
-		 * findBitSize(offset); lengthBitSizeCheck = findBitSize(length);
-		 */
+	public void WriteMatch(StringBuilder compressed,int offset, int length, char character)
+	{
 		String offsetInBits = writeInt(offset);
 		String LengthInBits = writeInt(length);
 		String characterInBits = writeChar(character);
 		String totalBits = offsetInBits + LengthInBits + characterInBits;
 		compressed.append(totalBits);
-		// compressed.append("<"+ offset + ","+ length +","+ character + ">");
-
 	}
-
-	public String writeInt(int decimalNumber) {
+	public String writeInt(int decimalNumber)
+	{
 		int BitSizeCheck = findBitSize(decimalNumber);
 		StringBuilder binaryString = new StringBuilder();
 		binaryString.append(convertNumToBinaryString(decimalNumber));
-		while (binaryString.length() < BitSizeCheck) {
+		while (binaryString.length() < BitSizeCheck)
+		{
 			binaryString.insert(0, "0");
 		}
-		if (BitSizeCheck == 8) {
+		if(BitSizeCheck == 8)
+		{
 			binaryString.insert(0, "0");
-		} else {
+		}
+		else
+		{
 			binaryString.insert(0, "1");
-		}
+		}		
 		return binaryString.toString();
 	}
-
-	public String convertNumToBinaryString(int decimalNumber) {
+	public String convertNumToBinaryString(int decimalNumber)
+	{	
 		return Integer.toString(decimalNumber, 2);
 	}
-
-	public String writeChar(char character) {
+	public String writeChar(char character)
+	{
 		StringBuilder binaryString = new StringBuilder();
-		binaryString.append(convertNumToBinaryString((int) character));
-		while (binaryString.length() < 8) {
+		binaryString.append(convertNumToBinaryString((int)character));
+		while (binaryString.length() < 8)
+		{
 			binaryString.insert(0, "0");
 		}
 		return binaryString.toString();
 	}
-
-	public boolean ableDeleteChar(StringBuilder dictionary) {
-		if (dictionary.length() == windowSize) {
+	public boolean ableDeleteChar(StringBuilder dictionary)
+	{
+		if(dictionary.length() == windowSize )
+		{
 			return true;
 		}
-		if (currentLookaheadBufferSize < lookaheadBufferSize) {
-			if (currentSearchBufferSize == searchBufferSize) {
+		if(currentLookaheadBufferSize < lookaheadBufferSize)
+		{
+			if(currentSearchBufferSize == searchBufferSize)
+			{
 				return true;
 			}
 		}
 		return false;
 	}
-
-	public void addSizeBitsMod64(StringBuilder compressed) {
-		int bitsLeft = compressed.length() % 64;
+	public void addSizeBitsMod64(StringBuilder compressed)
+	{
+		int bitsLeft = compressed.length()%64;
 		String bitsLeftBinary = writeInt(bitsLeft);
 		compressed.insert(0, bitsLeftBinary);
 	}
-
-	public void decompress() throws ClassNotFoundException, IOException {
+	public void decompress () throws ClassNotFoundException, IOException
+	{
 		BitSet source = readObjectFile();
-		StringBuilder decompress = new StringBuilder();
+		StringBuilder decompress = new StringBuilder ();		
 		int bitSetLength = findLengthBitSet(source);
-		decode(decompress, bitSetLength, source);
-		writeDecode(decompress);
+		decode(decompress,bitSetLength,source);	
+		WriteToFile(decompress);
 	}
-
-	public BitSet readObjectFile() throws IOException, ClassNotFoundException {
+	public BitSet readObjectFile() throws IOException, ClassNotFoundException 
+	{
 		FileInputStream input = new FileInputStream(this.inPath);
 		ObjectInputStream objectInput = new ObjectInputStream(input);
 		BitSet restoredDataInBits = (BitSet) objectInput.readObject();
 		objectInput.close();
 		return restoredDataInBits;
 	}
-
-	public void decode(StringBuilder decompress, int bitSetLength, BitSet source) {
-		while (nextBitIndex < bitSetLength) {
+	public void decode(StringBuilder decompress, int bitSetLength,BitSet source)
+	{
+		while(nextBitIndex < bitSetLength)
+		{
 			Match match = convertBitsToMatch(source);
 			addDecode(decompress, match);
 		}
 	}
-
-	public void addDecode(StringBuilder decompress, Match match) {
+	public void addDecode(StringBuilder decompress, Match match)
+	{
 		int RelativeOffset;
 		char decodeChar;
 
-		if (match.length == 0 && match.offset == 0) {
-			decompress.append(match.value);
-		} else {
+		if(match.length == 0 && match.offset == 0)
+		{
+			decompress.append(match.value);	
+		}
+		else
+		{	
 			RelativeOffset = decompress.length() - match.offset;
 			for (int i = 0; i < match.length; i++) {
 				decodeChar = decompress.charAt(RelativeOffset);
@@ -278,40 +303,48 @@ public class LZ77 {
 			}
 			decompress.append(match.value);
 		}
-
 	}
-
-	public Match convertBitsToMatch(BitSet source) {
+	public Match convertBitsToMatch(BitSet source)
+	{
 		int offset;
 		int length;
 		char character;
-		if (source.get(nextBitIndex) == false) {
+		if(source.get(nextBitIndex) == false)
+		{
 			nextBitIndex++;
-			offset = findOffsetLengthMatch(8, source);
-		} else {
-			nextBitIndex++;
-			offset = findOffsetLengthMatch(16, source);
+			offset = findOffsetLengthMatch(8,source);
 		}
-		if (source.get(nextBitIndex) == false) {
+		else
+		{
 			nextBitIndex++;
-			length = findOffsetLengthMatch(8, source);
-		} else {
+			offset = findOffsetLengthMatch(16,source);
+		}
+		if(source.get(nextBitIndex) == false)
+		{
 			nextBitIndex++;
-			length = findOffsetLengthMatch(16, source);
+			length = findOffsetLengthMatch(8,source);
+		}
+		else
+		{
+			nextBitIndex++;
+			length = findOffsetLengthMatch(16,source);
 		}
 
 		character = findCharacterMatch(source);
-		Match match = new Match(length, offset, "" + character);
+		Match match = new Match(length,offset,""+character);
 		return match;
 	}
-
-	public int findOffsetLengthMatch(int index, BitSet source) {
+	public int findOffsetLengthMatch(int index, BitSet source)
+	{
 		StringBuilder offsetLengthBinary = new StringBuilder();
 		for (int i = 0; i < index; i++) {
-			if (source.get(nextBitIndex) == false) {
+			if(source.get(nextBitIndex) == false)
+			{
 				offsetLengthBinary.append('0');
 				nextBitIndex++;
-			} else {
+			}
+			else
+			{
 				offsetLengthBinary.append('1');
 				nextBitIndex++;
 			}
@@ -319,47 +352,73 @@ public class LZ77 {
 		int offsetLengthDecimal = convertBinaryStringToDecimal(offsetLengthBinary);
 		return offsetLengthDecimal;
 	}
-
-	public char findCharacterMatch(BitSet source) {
+	public char findCharacterMatch(BitSet source)
+	{
 		StringBuilder charBinary = new StringBuilder();
 		for (int i = 0; i < 8; i++) {
-			if (source.get(nextBitIndex) == false) {
+			if(source.get(nextBitIndex) == false)
+			{
 				charBinary.append('0');
 				nextBitIndex++;
-			} else {
+			}
+			else
+			{
 				charBinary.append('1');
 				nextBitIndex++;
 			}
 		}
-		char charDecimal = (char) convertBinaryStringToDecimal(charBinary);
+		char charDecimal = (char)convertBinaryStringToDecimal(charBinary);
 		return charDecimal;
 	}
-
-	public int findLengthBitSet(BitSet source) {
+	public int findLengthBitSet(BitSet source)
+	{
 		StringBuilder lengthBinary = new StringBuilder();
 		for (int i = 0; i < 9; i++) {
-			if (source.get(i) == false) {
+			if(source.get(i) == false)
+			{
 				lengthBinary.append('0');
 				nextBitIndex++;
-			} else {
+			}
+			else
+			{
 				lengthBinary.append('1');
 				nextBitIndex++;
 			}
 		}
 		int lengthModule = convertBinaryStringToDecimal(lengthBinary);
 		int lengthNotUsed = 64 - lengthModule;
-		int fullLength = source.size() - lengthNotUsed + 9;
+		int fullLength = source.size() - lengthNotUsed + 9 ;
 		return fullLength;
 	}
-
-	public int convertBinaryStringToDecimal(StringBuilder lengthBinary) {
+	public int convertBinaryStringToDecimal(StringBuilder lengthBinary)
+	{
 		int length = Integer.parseInt(lengthBinary.toString(), 2);
 		return length;
 	}
-
-	public void writeDecode(StringBuilder decompress) throws IOException {
+	public void writeDecode (StringBuilder decompress) throws IOException
+	{
 		Writer write = new FileWriter(this.outFile);
 		write.write(decompress.toString());
 		write.close();
+	}
+	private void WriteToFile(StringBuilder decodedData) throws IOException
+	{
+		FileOutputStream outputFileStream = new FileOutputStream(this.outPath); 
+		for(int i = 0; i < decodedData.length(); i++)
+		{
+			byte currentByte = (byte)decodedData.charAt(i);
+			outputFileStream.write(currentByte);
+		}
+		outputFileStream.close();
+	}
+	public void CalculateRatio(BitSet encodedBits, byte[] source) 
+	{
+		float encodedSize = (float)findLengthBitSet(encodedBits)/8f;
+		float originalSize = source.length;
+		this.compressionRatio = originalSize / encodedSize;	
+	}
+	public float GetRatio()
+	{
+		return this.compressionRatio;
 	}
 }
