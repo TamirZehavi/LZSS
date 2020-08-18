@@ -1,11 +1,9 @@
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -19,18 +17,17 @@ public class LZSS {
 	protected int maxMatch = 0;
 	protected int minMatch = 0;
 	private File inFile = null;
-	private File outFile = null;
 	private int numberOfBytesPerOffset = 0;
 	protected int redundantBits = 0;
 	protected int sourceSize = 0;
 	protected int bitsSourcePosition = 0;
+	protected float compressionRatio = 0;
 	
 	public LZSS(String inPath, String outPath, int windowSize, int maxMatch, int minMatch)
 	{
 		this.inPath = inPath;
 		this.outPath = outPath;
 		this.inFile = new File(inPath);
-		this.outFile = new File(outPath);
 		this.windowSize = windowSize;
 		this.maxMatch = maxMatch;
 		this.minMatch = minMatch;
@@ -50,9 +47,22 @@ public class LZSS {
 
 		BitSet encodedBits = ConvertToBits(encodedData);
 		
-		WriteToFile(encodedBits);
+		CalculateRatio(encodedBits, source);
 		
+		WriteToFile(encodedBits);
 	}	
+
+	public void CalculateRatio(BitSet encodedBits, byte[] source) 
+	{
+		float encodedSize = (encodedBits.size() - this.redundantBits) / 8;
+		float originalSize = source.length;
+		this.compressionRatio = originalSize / encodedSize;
+	}
+	
+	public float GetRatio()
+	{
+		return this.compressionRatio;
+	}
 
 	private void WriteRedundantBits(StringBuilder encodedData)
 	{
