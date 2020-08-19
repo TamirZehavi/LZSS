@@ -14,10 +14,10 @@ public class LZSS {
 	private static final int SIZE_OF_ONE_BYTE = 255;
 	protected String inPath = null;
 	protected String outPath = null;
+	protected File inFile = null;
 	protected int windowSize = 0;
 	protected int maxMatch = 0;
 	protected int minMatch = 0;
-	private File inFile = null;
 	protected int redundantBits = 0;
 	protected int sourceSize = 0;
 	protected int bitsSourcePosition = 0;
@@ -51,7 +51,7 @@ public class LZSS {
 		WriteToFile(encodedBits);
 	}	
 
-	public void CalculateRatio(BitSet encodedBits, byte[] source) 
+	private void CalculateRatio(BitSet encodedBits, byte[] source) 
 	{
 		float encodedSize = (encodedBits.size() - this.redundantBits) / 8;
 		float originalSize = source.length;
@@ -69,7 +69,7 @@ public class LZSS {
 		encodedData.insert(0, ConvertToBinaryByteString(this.redundantBits));
 	}
 
-	public void WriteToFile(BitSet encodedBits) throws IOException {
+	private void WriteToFile(BitSet encodedBits) throws IOException {
 		
 		FileOutputStream writer = new FileOutputStream(this.outPath);
 		ObjectOutputStream objectWriter = new ObjectOutputStream(writer);
@@ -98,7 +98,7 @@ public class LZSS {
 		}
 	}
 
-	public BitSet ConvertToBits(StringBuilder encodedData)
+	private BitSet ConvertToBits(StringBuilder encodedData)
 	{
 		BitSet encodedBits = new BitSet(encodedData.length());
 		int nextIndexOfOne = encodedData.indexOf("1", 0);
@@ -113,12 +113,12 @@ public class LZSS {
 		return encodedBits;
 	}
 	
-	public int LogBaseTwo(int parameter)
+	private int LogBaseTwo(int parameter)
 	{
 		return (int)(Math.log(parameter) / Math.log(2));
 	}
 	
-	public void AdjustWindow(Match match, StringBuilder searchBuffer, int windowSize) 
+	private void AdjustWindow(Match match, StringBuilder searchBuffer, int windowSize) 
 	{
 		for(int i = 0 ; i < match.length ; i ++)
 		{
@@ -128,7 +128,7 @@ public class LZSS {
 		}
 	}
 
-	public void WriteMatch(Match match, StringBuilder encodedData) 
+	private void WriteMatch(Match match, StringBuilder encodedData) 
 	{
 		encodedData.append('1');
 		
@@ -145,7 +145,7 @@ public class LZSS {
 		encodedData.append(ConvertToBinaryByteString(match.length));	
 	}
 
-	public void WriteCharacter(int matchLength, StringBuilder encodedData, byte[] source, int sourcePosition)
+	private void WriteCharacter(int matchLength, StringBuilder encodedData, byte[] source, int sourcePosition)
 	{	
 		for(int i = 0 ; i < matchLength ; i ++)
 		{
@@ -156,7 +156,7 @@ public class LZSS {
 		}	
 	}
 	
-	public String ConvertToBinaryByteString(int parameter)
+	private String ConvertToBinaryByteString(int parameter)
 	{
 		String binaryRepresentation = Integer.toBinaryString(parameter);
 		
@@ -168,7 +168,7 @@ public class LZSS {
 		return binaryRepresentation;
 	}
 	
-	public Match FindMatch(byte[] source, int minMatch, Match match, StringBuilder searchBuffer, int sourcePosition, int maxMatch)
+	private Match FindMatch(byte[] source, int minMatch, Match match, StringBuilder searchBuffer, int sourcePosition, int maxMatch)
 	{
 		match.Reset();
 		byte[] dataChunk = Arrays.copyOfRange(source, sourcePosition, sourcePosition + maxMatch);
@@ -198,7 +198,7 @@ public class LZSS {
 		return match;
 	}
 	
-	public StringBuilder WriteInitialDictionary(byte[] source, int minMatch)
+	private StringBuilder WriteInitialDictionary(byte[] source, int minMatch)
 	{
 		StringBuilder searchBuffer = new StringBuilder();
 		
@@ -312,7 +312,7 @@ public class LZSS {
 //		this.numberOfBytesPerOffset = (int) (Math.ceil(LogBaseTwo(this.windowSize)/8f));
 	}
 	
-	public int ReadTwoBytes(BitSet source)
+	private int ReadTwoBytes(BitSet source)
 	{
 		int nextTwoBytes = 0;
 		
@@ -330,7 +330,7 @@ public class LZSS {
 		return nextTwoBytes;
 	}
 	
-	public int ReadOneByte(BitSet source)
+	private int ReadOneByte(BitSet source)
 	{
 		int nextByte = 0;
 		for(int i = 7 ; i >= 0 ; i--)

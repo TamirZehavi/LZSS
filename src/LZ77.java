@@ -45,7 +45,7 @@ public class LZ77 {
 		addSizeBitsMod64(compressed);
 		writeFile(compressed);		
 	}
-	public void bufferInitialize(StringBuilder dictionary)
+	private void bufferInitialize(StringBuilder dictionary)
 	{		
 		for (int i = 0; i < lookaheadBufferSize; i++) {
 			if(source.length>nextByteIndex) {
@@ -69,7 +69,7 @@ public class LZ77 {
 			appendBuffer(dictionary);
 		}
 	}
-	public Match findMatch(StringBuilder dictionary)
+	private Match findMatch(StringBuilder dictionary)
 	{
 		Match match= new Match(0,0, "");
 		String matchedString = null;
@@ -91,7 +91,7 @@ public class LZ77 {
 		}
 		return match;
 	}
-	public int findMatchIndex(StringBuilder dictionary,String value)
+	private int findMatchIndex(StringBuilder dictionary,String value)
 	{
 		int stringLength = value.length();
 		String tmpMatch = null;
@@ -107,7 +107,7 @@ public class LZ77 {
 		}
 		return -1;
 	}
-	public boolean haveAnyMatch(StringBuilder dictionary)
+	private boolean haveAnyMatch(StringBuilder dictionary)
 	{
 		if (currentSearchBufferSize == 0)
 		{
@@ -119,7 +119,7 @@ public class LZ77 {
 		}
 		return true;
 	}
-	public boolean isExistInSearchBuffer(StringBuilder dictionary, char isCharAtDictionary)
+	private boolean isExistInSearchBuffer(StringBuilder dictionary, char isCharAtDictionary)
 	{
 		for (int i = 0; i < currentSearchBufferSize; i++) {
 			if(dictionary.charAt(i) == isCharAtDictionary)
@@ -129,11 +129,11 @@ public class LZ77 {
 		}
 		return false;
 	}
-	public int increaseBuffer(int matchLength)
+	private int increaseBuffer(int matchLength)
 	{
 		return 1 + matchLength;
 	}
-	public int findBitSize(int decimalNumber) {
+	private int findBitSize(int decimalNumber) {
 		if(decimalNumber >= 256)
 		{
 			return 16;
@@ -152,7 +152,7 @@ public class LZ77 {
 			}
 		}
 	}
-	public BitSet ConvertToBits(StringBuilder compressed)
+	private BitSet ConvertToBits(StringBuilder compressed)
 	{
 		BitSet encodedBits = new BitSet(compressed.length());
 		int nextIndexOfOne = compressed.indexOf("1", 0);
@@ -164,7 +164,7 @@ public class LZ77 {
 		}		
 		return encodedBits;
 	}
-	public void writeFile(StringBuilder compressed) throws IOException
+	private void writeFile(StringBuilder compressed) throws IOException
 	{
 		BitSet encodedBits = new BitSet(compressed.length());
 		encodedBits = ConvertToBits(compressed);
@@ -174,7 +174,7 @@ public class LZ77 {
 		CalculateRatio(encodedBits,source);
 		objectWriter.close();
 	}
-	public void appendBuffer(StringBuilder dictionary)
+	private void appendBuffer(StringBuilder dictionary)
 	{
 		for (int i = 0; i < appendToWindowBuffer && i < source.length; i++) {
 			if(ableDeleteChar(dictionary))
@@ -198,7 +198,7 @@ public class LZ77 {
 		}
 		appendToWindowBuffer = 0;
 	}
-	public void WriteMatch(StringBuilder compressed,int offset, int length, char character)
+	private void WriteMatch(StringBuilder compressed,int offset, int length, char character)
 	{
 		String offsetInBits = writeInt(offset);
 		String LengthInBits = writeInt(length);
@@ -206,7 +206,7 @@ public class LZ77 {
 		String totalBits = offsetInBits + LengthInBits + characterInBits;
 		compressed.append(totalBits);
 	}
-	public String writeInt(int decimalNumber)
+	private String writeInt(int decimalNumber)
 	{
 		int BitSizeCheck = findBitSize(decimalNumber);
 		StringBuilder binaryString = new StringBuilder();
@@ -225,11 +225,11 @@ public class LZ77 {
 		}		
 		return binaryString.toString();
 	}
-	public String convertNumToBinaryString(int decimalNumber)
+	private String convertNumToBinaryString(int decimalNumber)
 	{	
 		return Integer.toString(decimalNumber, 2);
 	}
-	public String writeChar(char character)
+	private String writeChar(char character)
 	{
 		StringBuilder binaryString = new StringBuilder();
 		binaryString.append(convertNumToBinaryString((int)character));
@@ -239,7 +239,7 @@ public class LZ77 {
 		}
 		return binaryString.toString();
 	}
-	public boolean ableDeleteChar(StringBuilder dictionary)
+	private boolean ableDeleteChar(StringBuilder dictionary)
 	{
 		if(dictionary.length() == windowSize )
 		{
@@ -254,7 +254,7 @@ public class LZ77 {
 		}
 		return false;
 	}
-	public void addSizeBitsMod64(StringBuilder compressed)
+	private void addSizeBitsMod64(StringBuilder compressed)
 	{
 		int bitsLeft = compressed.length()%64;
 		String bitsLeftBinary = writeInt(bitsLeft);
@@ -268,7 +268,7 @@ public class LZ77 {
 		decode(decompress,bitSetLength,source);	
 		WriteToFile(decompress);
 	}
-	public BitSet readObjectFile() throws IOException, ClassNotFoundException 
+	private BitSet readObjectFile() throws IOException, ClassNotFoundException 
 	{
 		FileInputStream input = new FileInputStream(this.inPath);
 		ObjectInputStream objectInput = new ObjectInputStream(input);
@@ -276,7 +276,7 @@ public class LZ77 {
 		objectInput.close();
 		return restoredDataInBits;
 	}
-	public void decode(StringBuilder decompress, int bitSetLength,BitSet source)
+	private void decode(StringBuilder decompress, int bitSetLength,BitSet source)
 	{
 		while(nextBitIndex < bitSetLength)
 		{
@@ -284,7 +284,7 @@ public class LZ77 {
 			addDecode(decompress, match);
 		}
 	}
-	public void addDecode(StringBuilder decompress, Match match)
+	private void addDecode(StringBuilder decompress, Match match)
 	{
 		int RelativeOffset;
 		char decodeChar;
@@ -304,7 +304,7 @@ public class LZ77 {
 			decompress.append(match.value);
 		}
 	}
-	public Match convertBitsToMatch(BitSet source)
+	private Match convertBitsToMatch(BitSet source)
 	{
 		int offset;
 		int length;
@@ -334,7 +334,7 @@ public class LZ77 {
 		Match match = new Match(length,offset,""+character);
 		return match;
 	}
-	public int findOffsetLengthMatch(int index, BitSet source)
+	private int findOffsetLengthMatch(int index, BitSet source)
 	{
 		StringBuilder offsetLengthBinary = new StringBuilder();
 		for (int i = 0; i < index; i++) {
@@ -352,7 +352,7 @@ public class LZ77 {
 		int offsetLengthDecimal = convertBinaryStringToDecimal(offsetLengthBinary);
 		return offsetLengthDecimal;
 	}
-	public char findCharacterMatch(BitSet source)
+	private char findCharacterMatch(BitSet source)
 	{
 		StringBuilder charBinary = new StringBuilder();
 		for (int i = 0; i < 8; i++) {
@@ -370,7 +370,7 @@ public class LZ77 {
 		char charDecimal = (char)convertBinaryStringToDecimal(charBinary);
 		return charDecimal;
 	}
-	public int findLengthBitSet(BitSet source)
+	private int findLengthBitSet(BitSet source)
 	{
 		StringBuilder lengthBinary = new StringBuilder();
 		for (int i = 0; i < 9; i++) {
@@ -390,7 +390,7 @@ public class LZ77 {
 		int fullLength = source.size() - lengthNotUsed + 9 ;
 		return fullLength;
 	}
-	public int convertBinaryStringToDecimal(StringBuilder lengthBinary)
+	private int convertBinaryStringToDecimal(StringBuilder lengthBinary)
 	{
 		int length = Integer.parseInt(lengthBinary.toString(), 2);
 		return length;
@@ -411,7 +411,7 @@ public class LZ77 {
 		}
 		outputFileStream.close();
 	}
-	public void CalculateRatio(BitSet encodedBits, byte[] source) 
+	private void CalculateRatio(BitSet encodedBits, byte[] source) 
 	{
 		float encodedSize = (float)findLengthBitSet(encodedBits)/8f;
 		float originalSize = source.length;

@@ -15,7 +15,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
-//import javafx.scene.image.Image;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -41,8 +41,8 @@ public class GUI extends Application
 		BorderPane mainLayout = new BorderPane();
 		Scene mainScene = new Scene(mainLayout, 520, 320);
 		
-//		Image img = new Image("/wink.png");
-//		this.window.getIcons().add(img);
+		Image img = new Image("https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/a18e0cc2-0077-479b-9619-07db5bcef918/de3ijfq-f6caaf06-b21b-4d75-82da-289b72742e8a.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOiIsImlzcyI6InVybjphcHA6Iiwib2JqIjpbW3sicGF0aCI6IlwvZlwvYTE4ZTBjYzItMDA3Ny00NzliLTk2MTktMDdkYjViY2VmOTE4XC9kZTNpamZxLWY2Y2FhZjA2LWIyMWItNGQ3NS04MmRhLTI4OWI3Mjc0MmU4YS5wbmcifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6ZmlsZS5kb3dubG9hZCJdfQ.-0Baa5JBR0RzEQrA3qf_jrfcfKJsefq5OrbLGcnpJFE");
+		this.window.getIcons().add(img);
 		
 		this.window.setScene(mainScene);
 		
@@ -208,7 +208,7 @@ public class GUI extends Application
 				try {
 					LZ77 lz77 = new LZ77(inPath, outPath, this.windowSize, this.maxMatch);
 					lz77.compress();
-//					compressionRatio.setText( "Ratio: " + String.valueOf(lz77.GetRatio()) );
+					compressionRatio.setText( "Ratio: " + String.valueOf(lz77.GetRatio()) );
 					Alert doneWindow = new Alert(AlertType.INFORMATION);
 					doneWindow.setTitle(null);
 					doneWindow.setHeaderText(null);
